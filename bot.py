@@ -155,6 +155,7 @@ and if i'm sleep you cantact my owner he will wake me.
 
 Hope i'm useful for you, Enjoy my service.           
 '''
+    self.bot.send_message(message.chat.id, txt)
 
     def tool(self):
 
