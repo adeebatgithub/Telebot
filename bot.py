@@ -6,7 +6,7 @@
 
 import telebot
 from telebot import types
-import os, pyfiglet, psycopg2, platform
+import os, pyfiglet, sqlite3, platform
 from dotenv import load_dotenv
 
 
@@ -15,9 +15,10 @@ class Bot:
     def __init__(self):
         
         """
-        1. Forward tag removing
-        2. Instagram video downloading
-        3. File search 
+        1- Forward tag remover
+        2- File search
+        3- Instagram video download
+        
         """
 
         load_dotenv()
@@ -26,17 +27,8 @@ class Bot:
         print("")
         print('\033[0;32mBot started...\033[0m')
         print('\n')
-        self.path = "data.db"
-        self.db_data = psycopg2.connect(
-            
-            host= os.getenv("PGHOST"),
-            dbname= os.getenv("PGDATABASE"),
-            port = os.getenv("PGPORT"),
-            user = os.getenv("PGUSER"),
-            password = os.getenv("PGPASSWORD"),
-            sslmode = "require",
-            options = f"endpoint={os.getenv('PGENDPOINTID')}"
-            )
+        self.path = self.get_db_path()
+        self.db_data = sqlite3.connect(self.path, check_same_thread=False)
         self.db_read = self.db_data.cursor()
         self.db_write = self.db_data.cursor()
         self.search_name_list = {}
@@ -82,7 +74,18 @@ class Bot:
 
 ###################################################
 
-        self.bot.polling(none_stop=True, timeout=120)
+        self.bot.polling()
+        #try:
+        #    self.bot.polling(none_stop=True, timeout=120)
+        #except ConnectionError:
+       #     print("\033[0;31m>> error : not connected to network\033[0m")
+        #    quit()
+      #  except Exception as e:
+      #      print(f"\033[0;031m>> Bot_down_err : {e}\033[0m")
+      #      self.db_read.close()
+        #    self.db_write.close()
+         #   self.db_data.close()
+        #    self.__init__()
 
 ###################################################
 
@@ -100,7 +103,6 @@ class Bot:
                     )
                     
                 if "https://www.instagram.com/reel/" in message.text:
-                
                     reel_id = message.text.split("reel/")[1]
                     text = "https://www.ddinstagram.com/reel/"+reel_id
                     self.bot.send_message(
@@ -146,16 +148,15 @@ coming to my duty,
 i'll tell you how to remove the forward tag of a media file.
 step-1 : forward a media file to me.
 step-2 : select Remove forward tag from the options
-And i'll send you the file without forward tag  
-
-And the last command is "/up"
-i have this command because i am not an 24X7 Bot i am too lazy i like to sleep most of the time.
-so when you type "/up" command you can check whether i'm sleep or awake
-and if i'm sleep you cantact my owner he will wake me.
+And i'll send you the file without forward tag.
 
 Hope i'm useful for you, Enjoy my service.           
 '''
-    self.bot.send_message(message.chat.id, txt)
+        print(f">> {message.chat.username} started")
+        self.bot.send_message(
+            message.chat.id,
+            txt,
+        )
 
     def tool(self):
 
@@ -184,7 +185,6 @@ Hope i'm useful for you, Enjoy my service.
 List of commands:
 
  /help    : Open command list
- /up      : check if the Bot is on or off
  /search  : (beta)search for media files
  /about   : about the Bot
         '''
@@ -239,6 +239,12 @@ Owner     : Adeebdanish
                         self.send_vid(message)
         self.messages_dict.__delitem__(call.from_user.id)
 
+    def get_db_path(self):
+        if platform.system() == 'Windows':
+            path = "data.db"
+        if platform.system() == "Linux":
+            path = "/sdcard/python/bot/data.db"
+        return path
 
     def save_data(self, message):
         if message.content_type == "document":
@@ -251,15 +257,14 @@ Owner     : Adeebdanish
             uid = message.video.file_unique_id
         _type = message.content_type
 
-        self.db_read.execute('''
+        uid_col = self.db_read.execute('''
             SELECT uid FROM Files;
         ''')
-        uid_col = self.db_read.fetchall()
         file_ids = [col[0] for col in uid_col]
         if uid not in file_ids:
             self.db_write.execute('''
-                INSERT INTO Files VALUES ('{}','{}','{}','{}');
-            '''.format(name, _id, uid, _type))
+                INSERT INTO Files VALUES (?,?,?,?);
+            ''', (name, _id, uid, _type))
             self.db_data.commit()
             print(f">> dta_svd : [name:{name},id:{_id},uid:{uid},type:{_type}]")
 
@@ -267,15 +272,13 @@ Owner     : Adeebdanish
         file_name = message.text[8:].lower().split()
         self.search_name_list = {}
 
-        self.db_read.execute('''
+        files = self.db_read.execute('''
             SELECT * FROM Files;
         ''')
-        files = self.db_read.fetchall()
         for data in files:
             count = 0
             for name in file_name:
-                if name in data[0].lower().split(".") or name in data[0].lower().split("_") or name in data[
-                    0].lower().split(" "):
+                if name in data[0].lower().split(".") or name in data[0].lower().split("_") or name in data[0].lower().split(" "):
                     count += 1
             if len(file_name) == count:
                 self.search_name_list[data[0]] = data[2]
@@ -291,15 +294,15 @@ Owner     : Adeebdanish
             lst = dict(list(self.search_name_list.items())[ln:ln+10])
             temp_lst.append(lst)
             ln += 10
-        
-        for name, uid in temp_lst[page].items():
+        if len(self.search_name_list) != 0:
+            for name, uid in temp_lst[page].items():
             
-            btn = types.InlineKeyboardButton(
-                name,
-                callback_data=f"search#{uid}",
-            )
-            temp_lst.append(name)
-            markup.add(btn)
+                btn = types.InlineKeyboardButton(
+                    name,
+                    callback_data=f"search#{uid}",
+                )
+                temp_lst.append(name)
+                markup.add(btn)
             
         if len(self.search_name_list) > 10:
             next_btn = types.InlineKeyboardButton(
@@ -339,9 +342,7 @@ Owner     : Adeebdanish
         )
 
     def done_btn_call_handle(self, call):
-        
         self.messages_dict = {}
-        
         self.bot.delete_message(
             call.from_user.id,
             call.message.id
@@ -359,10 +360,9 @@ Owner     : Adeebdanish
         )
 
     def search_call_handle(self, call):
-        self.db_read.execute('''
-            SELECT * FROM Files WHERE uid='{}';
-        '''.format(call.data.split("#")[1],))
-        file = self.db_read.fetchall()
+        file = self.db_read.execute('''
+            SELECT * FROM Files WHERE uid=?;
+        ''', (call.data.split("#")[1],))
         data = [data for data in file][0]
         name = data[0]
         message_id = data[1]
@@ -382,5 +382,14 @@ Owner     : Adeebdanish
             print(f"srh>> vid_snd : {name}")
 
 if __name__ == "__main__":
-    
+    if platform.system() == "Windows":
+        os.system("cls")
+    if platform.system() == "Linux":
+        os.system('clear')
+    print("\033[0;33m=\033[0m" * 56)
+    print("\033[0;33m=\033[0m" * 56)
+    print(f"\033[1;32m{pyfiglet.figlet_format('                  BOT')}\033[0m")
+    print("\033[0;33m=\033[0m" * 56)
+    print("\033[0;33m=\033[0m" * 56)
+    print("")
     Bot()
