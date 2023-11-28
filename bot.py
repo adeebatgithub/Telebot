@@ -74,18 +74,18 @@ class Bot:
 
 ###################################################
 
-        self.bot.polling()
-        #try:
-        #    self.bot.polling(none_stop=True, timeout=120)
-        #except ConnectionError:
-       #     print("\033[0;31m>> error : not connected to network\033[0m")
-        #    quit()
-      #  except Exception as e:
-      #      print(f"\033[0;031m>> Bot_down_err : {e}\033[0m")
-      #      self.db_read.close()
-        #    self.db_write.close()
-         #   self.db_data.close()
-        #    self.__init__()
+        # self.bot.polling()
+        try:
+           self.bot.polling(none_stop=True, timeout=120)
+        except ConnectionError:
+           print("\033[0;31m>> error : not connected to network\033[0m")
+           quit()
+        except Exception as e:
+           print(f"\033[0;031m>> Bot_down_err : {e}\033[0m")
+           self.db_read.close()
+           self.db_write.close()
+           self.db_data.close()
+           self.__init__()
 
 ###################################################
 
