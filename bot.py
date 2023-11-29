@@ -6,7 +6,7 @@
 
 import telebot
 from telebot import types
-import os, pyfiglet, sqlite3, platform
+import os, sqlite3, platform
 from dotenv import load_dotenv
 from datetime import datetime
 
@@ -45,7 +45,7 @@ class Bot:
             try:
                 cmd_func[message.text](message)
             except Exception as e:
-                log(f"cmd_err : {e} : {message.text}")
+                self.log(f"cmd_err : {e} : {message.text}")
 
         @self.bot.callback_query_handler(func=lambda call: call.data in ["ftr_btn", "done"])
         def call_handle_func(call):
@@ -56,7 +56,7 @@ class Bot:
             try:
                 calls_dict[call.data](call)
             except Exception as e:
-                log(f"call_err : {e} : {call.data}")
+                self.log(f"call_err : {e} : {call.data}")
 
 
         @self.bot.callback_query_handler(func=lambda call: call.data.split("#")[0] == "search")
@@ -77,19 +77,19 @@ class Bot:
         try:
             self.bot.polling(none_stop=True, timeout=120)
         except ConnectionError:
-            log("error : not connected to network")
+            self.log("error : not connected to network")
             quit()
         except Exception as e:
-            log(f"Bot_down_err : {e}")
+            self.log(f"Bot_down_err : {e}")
             self.db_read.close()
             self.db_write.close()
             self.db_data.close()
-            log("restarting Bot...")
+            self.log("restarting Bot...")
             self.__init__()
 
 ###################################################
 
-    def log(txt: str) -> None:
+    def log(self, txt: str) -> None:
         
         print(f"[{datetime.now()}] {txt}")
     
