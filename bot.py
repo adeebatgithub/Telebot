@@ -8,6 +8,7 @@ import telebot
 from telebot import types
 import os, pyfiglet, sqlite3, platform
 from dotenv import load_dotenv
+from datetime import datetime
 
 
 class Bot:
@@ -24,9 +25,7 @@ class Bot:
         load_dotenv()
         API_KEY = os.getenv("API_KEY")
         self.bot = telebot.TeleBot(API_KEY)
-        print("")
-        print('\033[0;32mBot started...\033[0m')
-        print('\n')
+        self.log("Bot started...")
         self.path = self.get_db_path()
         self.db_data = sqlite3.connect(self.path, check_same_thread=False)
         self.db_read = self.db_data.cursor()
@@ -46,7 +45,7 @@ class Bot:
             try:
                 cmd_func[message.text](message)
             except Exception as e:
-                print(f"\033[0;31m>> cmd_err : {e} : {message.text}\033[0m")
+                log(f"cmd_err : {e} : {message.text}")
 
         @self.bot.callback_query_handler(func=lambda call: call.data in ["ftr_btn", "done"])
         def call_handle_func(call):
@@ -57,7 +56,7 @@ class Bot:
             try:
                 calls_dict[call.data](call)
             except Exception as e:
-                print(f"\033[0;31m>> call_err : {e} : {call.data}\033[0m")
+                log(f"call_err : {e} : {call.data}")
 
 
         @self.bot.callback_query_handler(func=lambda call: call.data.split("#")[0] == "search")
@@ -74,21 +73,26 @@ class Bot:
 
 ###################################################
 
-        # self.bot.polling()
+        #self.bot.polling()
         try:
-           self.bot.polling(none_stop=True, timeout=120)
+            self.bot.polling(none_stop=True, timeout=120)
         except ConnectionError:
-           print("\033[0;31m>> error : not connected to network\033[0m")
-           quit()
+            log("error : not connected to network")
+            quit()
         except Exception as e:
-           print(f"\033[0;031m>> Bot_down_err : {e}\033[0m")
-           self.db_read.close()
-           self.db_write.close()
-           self.db_data.close()
-           self.__init__()
+            log(f"Bot_down_err : {e}")
+            self.db_read.close()
+            self.db_write.close()
+            self.db_data.close()
+            log("restarting Bot...")
+            self.__init__()
 
 ###################################################
 
+    def log(txt: str) -> None:
+        
+        print(f"[{datetime.now()}] {txt}")
+    
     def main(self, messages):
         for message in messages:
         
@@ -152,7 +156,7 @@ And i'll send you the file without forward tag.
 
 Hope i'm useful for you, Enjoy my service.           
 '''
-        print(f">> {message.chat.username} started")
+        self.log(f"{message.chat.username} started")
         self.bot.send_message(
             message.chat.id,
             txt,
@@ -210,20 +214,20 @@ Owner     : Adeebdanish
             "I am up")
 
     def send_doc(self, message):
-        print(f">> doc_rcv : {message.document.file_name}")
+        self.log(f"doc_rcv : {message.document.file_name}")
         self.bot.send_document(
             message.chat.id,
             message.document.file_id,
         )
-        print(f'ftr>> doc_snd : {message.document.file_name}')
+        self.log(f'doc_snd : {message.document.file_name}')
 
     def send_vid(self, message):
-        print(f">> vid_rcv : {message.video.file_name}")
+        self.log(f"vid_rcv : {message.video.file_name}")
         self.bot.send_video(
             message.chat.id,
             message.video.file_id,
         )
-        print(f'ftr>> vid_snd : {message.video.file_name}')
+        self.log(f'vid_snd : {message.video.file_name}')
 
     def ftr_btn_call_handle(self, call):
         self.bot.delete_message(
@@ -266,7 +270,7 @@ Owner     : Adeebdanish
                 INSERT INTO Files VALUES (?,?,?,?);
             ''', (name, _id, uid, _type))
             self.db_data.commit()
-            print(f">> dta_svd : [name:{name},id:{_id},uid:{uid},type:{_type}]")
+            self.log(f"dta_svd: name:{name}, type:{_type}")
 
     def search_data(self, message):
         file_name = message.text[8:].lower().split()
@@ -331,6 +335,7 @@ Owner     : Adeebdanish
         )
 
     def nxt_btn_call_handle(self, call):
+        
         self.bot.delete_message(
             call.from_user.id,
             call.message.id,
@@ -342,6 +347,7 @@ Owner     : Adeebdanish
         )
 
     def done_btn_call_handle(self, call):
+        
         self.messages_dict = {}
         self.bot.delete_message(
             call.from_user.id,
@@ -349,6 +355,7 @@ Owner     : Adeebdanish
         )
         
     def back_btn_call_handle(self, call):
+        
         self.bot.delete_message(
             call.from_user.id,
             call.message.id,
@@ -360,6 +367,7 @@ Owner     : Adeebdanish
         )
 
     def search_call_handle(self, call):
+        
         file = self.db_read.execute('''
             SELECT * FROM Files WHERE uid=?;
         ''', (call.data.split("#")[1],))
@@ -373,23 +381,14 @@ Owner     : Adeebdanish
                 call.from_user.id,
                 message_id,
             )
-            print(f"srh>> doc_snd : {name}")
+            self.log(f"srh doc_snd: {name}")
         if message_type == "video":
             self.bot.send_video(
                 call.from_user.id,
                 message_id,
             )
-            print(f"srh>> vid_snd : {name}")
+            self.log(f"srh vid_snd: {name}")
 
 if __name__ == "__main__":
-    if platform.system() == "Windows":
-        os.system("cls")
-    if platform.system() == "Linux":
-        os.system('clear')
-    print("\033[0;33m=\033[0m" * 56)
-    print("\033[0;33m=\033[0m" * 56)
-    print(f"\033[1;32m{pyfiglet.figlet_format('                  BOT')}\033[0m")
-    print("\033[0;33m=\033[0m" * 56)
-    print("\033[0;33m=\033[0m" * 56)
-    print("")
+    
     Bot()
