@@ -109,18 +109,3 @@ class DBMan(DBRead, DBWrite):
 
     def __init__(self):
         super().__init__()
-
-class Test(DBMan):
-
-    db_path = "..\data.db"
-    table_name = "Files"
-
-    def __init__(self):
-        super().__init__()
-
-        self.db_fetch_col(col="file_uid")
-
-if __name__ == "__main__":
-    Test()
-
-
