@@ -74,16 +74,16 @@ class Bot(DBMan):
 
         ###################################################
 
-        self.bot.polling()
-        # try:
-        #     self.bot.polling(none_stop=True, timeout=120)
-        # except ConnectionError:
-        #     self.log("error : not connected to network")
-        #     quit()
-        # except Exception as e:
-        #     self.log(f"Bot_down_err : {e}")
-        #     self.log("restarting Bot...")
-        #     self.__init__()
+        # self.bot.polling()
+        try:
+            self.bot.polling(none_stop=True, timeout=120)
+        except ConnectionError:
+            self.log("error : not connected to network")
+            quit()
+        except Exception as e:
+            self.log(f"Bot_down_err : {e}")
+            self.log("restarting Bot...")
+            self.__init__()
 
     ###################################################
 
