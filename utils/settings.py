@@ -1,7 +1,24 @@
 
-START_REPLAY = f'''
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+
+####################################################
+# Database settings 
+####################################################
+
+DB_TYPE = "SQL"
+DB_PATH = "data.db"
+
+####################################################
+# Replay messages
+####################################################
+
+START_REPLAY = '''
 Hai,
-Welcome to my territory.
+Welcome to my territory Mr.{}
 
 first of all my name is KURUKKAN and i am a BOT.
 currently i have only one duty, to remove forward tag from files,
@@ -20,7 +37,7 @@ And i'll send you the file without forward tag.
 Hope i'm useful for you, Enjoy my service.           
 '''
 
-HELP_REPLAY = f'''
+HELP_REPLAY = '''
 List of commands:
 
  /help    : Open command list
@@ -28,6 +45,6 @@ List of commands:
  /about   : about the Bot
 '''
 
-ABOUT_REPLAY = f'''
+ABOUT_REPLAY = '''
 Name      : KURUKKAN
 '''

@@ -7,7 +7,6 @@
 import telebot
 from telebot import types
 import os, sqlite3, platform
-from dotenv import load_dotenv
 from datetime import datetime
 
 from utils.dbman import DBMan
@@ -15,7 +14,7 @@ from utils import settings
 
 
 class Bot(DBMan):
-    db_path = "data.db"
+    db_path = settings.DB_PATH
     table_name = "Files"
 
     # data structure (id, name, file_id, file_uid, file_type)
@@ -28,9 +27,7 @@ class Bot(DBMan):
         """
 
         super().__init__()
-        load_dotenv()
-        API_KEY = os.getenv("API_KEY")
-        self.bot = telebot.TeleBot(API_KEY)
+        self.bot = telebot.TeleBot(settings.API_KEY)
         self.log("Bot started...")
         self.search_name_list = {}
         self.messages_dict = {}
@@ -125,10 +122,11 @@ class Bot(DBMan):
             self.tool()
 
     def start(self, message):
-        self.log(f"{message.chat.username} started")
+        user = message.chat.username
+        self.log(f"{user} started")
         self.bot.send_message(
             message.chat.id,
-            settings.START_REPLAY,
+            settings.START_REPLAY.format(user),
         )
 
     def help_desk(self, message):
