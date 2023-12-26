@@ -148,7 +148,6 @@ class Bot(DBMan):
         )
 
     def tool(self):
-
         for chat_id in self.messages_dict.keys():
             markup = types.InlineKeyboardMarkup()
             ftr_btn = types.InlineKeyboardButton(
@@ -196,8 +195,7 @@ class Bot(DBMan):
             col_data["file_uid"] = message.video.file_unique_id
         col_data["file_type"] = message.content_type
 
-        uid_col = self.db_fetch_col(col="file_uid")
-        file_ids = [col[0] for col in uid_col]
+        file_ids = self.db_fetch_col(col_name="file_uid")
         if col_data["file_uid"] not in file_ids:
             self.db_insert(col_data=col_data)
             self.log(f"dta_svd: name:{col_data['name']}")
@@ -210,10 +208,10 @@ class Bot(DBMan):
         for data in files:
             count = 0
             for name in file_name:
-                if any(name in data[1].lower().split(separator) for separator in ['.', '_', ' ']):
+                if any(name in data["name"].lower().split(separator) for separator in ['.', '_', ' ']):
                     count += 1
             if len(file_name) == count:
-                self.search_name_list[data[1]] = data[3]
+                self.search_name_list[data["name"]] = data["file_uid"]
         self.display_search_data(message.chat.id, 0)
 
     def display_search_data(self, message_id, page):
@@ -308,11 +306,10 @@ class Bot(DBMan):
 
     def search_call_handle(self, call):
 
-        file = self.db_fetch_row(file_uid = call.data.split("#")[1])
-        data = [data for data in file][0]
-        name = data[1]
-        message_id = data[2]
-        message_type = data[4]
+        file = self.db_fetch_row(file_uid=call.data.split("#")[1])
+        name = file["name"]
+        message_id = file["file_id"]
+        message_type = file["file_type"]
 
         if message_type == "document":
             self.bot.send_document(
