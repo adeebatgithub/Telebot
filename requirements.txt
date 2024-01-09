@@ -1,3 +1,2 @@
-pyfiglet
 pyTelegramBotAPI
 python-dotenv
