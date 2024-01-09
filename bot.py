@@ -9,8 +9,8 @@ from telebot import types
 import os, sqlite3, platform
 from datetime import datetime
 
-from utils.dbman import DBMan
-from utils import settings
+from dbman import DBMan
+import settings
 
 
 class Bot(DBMan):
