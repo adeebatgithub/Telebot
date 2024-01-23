@@ -13,9 +13,7 @@ from dbman import DBMan
 import settings
 
 
-class Bot(DBMan):
-    db_path = settings.DB_PATH
-    table_name = "Files"
+class Bot():
 
     # data structure (id, name, file_id, file_uid, file_type)
 
@@ -25,14 +23,17 @@ class Bot(DBMan):
         1- Forward tag remover
         2- File search
         """
-
-        super().__init__()
         self.bot = telebot.TeleBot(settings.API_KEY)
         self.log("Bot started...")
         self.search_name_list = {}
         self.messages_dict = {}
 
         self.bot.set_update_listener(self.main)
+
+        self.db = DBMan()
+        self.db.DB_ENGINE = settings.DB_ENGINE
+        self.db.DB_CONFIG = settings.DB_CONFIG
+        self.db.table_name = settings.TABLE_NAME
 
         @self.bot.message_handler(commands=["help", "up", "about"])
         def command_handler_func(message):
@@ -73,7 +74,7 @@ class Bot(DBMan):
 
         # self.bot.polling()
         try:
-            self.bot.polling(none_stop=True, timeout=120)
+            self.bot.polling(none_stop=True)
         except ConnectionError:
             self.log("error : not connected to network")
             quit()
@@ -195,16 +196,16 @@ class Bot(DBMan):
             col_data["file_uid"] = message.video.file_unique_id
         col_data["file_type"] = message.content_type
 
-        file_ids = self.db_fetch_col(col_name="file_uid")
+        file_ids = self.db.db_fetch_col(col_names=["file_uid"])
         if col_data["file_uid"] not in file_ids:
-            self.db_insert(col_data=col_data)
-            self.log(f"dta_svd: name:{col_data['name']}")
+            self.db.db_insert(col_data)
+            self.log(f"dta_svd: name: {col_data['name']}")
 
     def search_data(self, message):
         file_name = message.text[8:].lower().split()
         self.search_name_list = {}
 
-        files = self.db_fetch_all()
+        files = self.db.db_fetch_all()
         for data in files:
             count = 0
             for name in file_name:
@@ -212,6 +213,8 @@ class Bot(DBMan):
                     count += 1
             if len(file_name) == count:
                 self.search_name_list[data["name"]] = data["file_uid"]
+
+        self.bot.delete_message(message.chat.id, message.id)
         self.display_search_data(message.chat.id, 0)
 
     def display_search_data(self, message_id, page):
@@ -306,7 +309,7 @@ class Bot(DBMan):
 
     def search_call_handle(self, call):
 
-        file = self.db_fetch_row(file_uid=call.data.split("#")[1])
+        file = self.db.db_fetch_row(file_uid=call.data.split("#")[1])[0]
         name = file["name"]
         message_id = file["file_id"]
         message_type = file["file_type"]

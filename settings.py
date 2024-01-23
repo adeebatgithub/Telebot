@@ -9,8 +9,16 @@ API_KEY = os.getenv("API_KEY")
 # Database settings 
 ####################################################
 
-DB_TYPE = "SQL"
-DB_PATH = "data.db"
+DB_ENGINE = "psql"
+DB_CONFIG = {
+    
+    "NAME":os.getenv("DB_NAME"),
+    "HOST":os.getenv("DB_HOST"),
+    "PORT":os.getenv("DB_PORT"),
+    "USER":os.getenv("DB_USER"),
+    "PASSWORD":os.getenv("DB_PASSWORD"),
+}
+TABLE_NAME = "Files"
 
 ####################################################
 # Replay messages
